@@ -9,5 +9,5 @@ Despite its relatively recent inclusion as a strand in the 2020 K-8 Ontario Math
 ## Repository structure
 - `paper & figures` contains the files used to produce the final paper, including figures.
 - `scripts & data` contains the anonymized data from the survey responses and the code used to perform the analysis.
-  - `01_financial_literacy_analysis.ipynb`: Jupter Notebook containing the financial literacy analysis.
+  - `01_financial_literacy_analysis.ipynb`: Jupyter Notebook containing the financial literacy analysis.
   - `02_self_efficacy_analysis.Rmd`: R Markdown document containing the self efficacy analysis.

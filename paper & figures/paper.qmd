@@ -13,7 +13,6 @@ abstract: "Despite its relatively recent inclusion as a strand in the 2020 K-8 O
 format: pdf
 number-sections: true
 bibliography: references.bib
-toc: true
 ---
 
 ```{r}
@@ -162,6 +161,171 @@ Specific areas of improvement found by the study include interest rates and fixe
 # Assumptions
 
 For the multiple linear regression, observations are assumed independent given that each participant completed the survey individually. It is important to note that the outcome variable (financial literacy index) is discrete rather than truly continuous; for example, the basic index takes up to five possible values given there are four questions. Nevertheless, linear regression is robust to mild violations of continuity (Schmidt & Finan, 2018) and represents the conventional approach in the financial literacy literature (van Rooij et al., 2011; Nicolini et al., 2013). Hence, this method will be employed using the overall index as a dependent variable to better approximate continuity. Following model fitting, residual plots confirmed linearity and homoscedasticity, VIF values were below 5 indicating no multicollinearity, and the Q-Q plot revealed only a mild deviation from normality at the tails. For the logistic regression, the binary outcome variable (invest/not invest) satisfies the core requirement of the model by design. No multicollinearity was detected (max VIF = 2.8), and the Box-Tidwell test supported the linearity of log-odds for all continuous predictors. However, with 61 investors against a recommended minimum of 100 for a 10-predictor model (Peduzzi et al., 1996), the sample size adequacy threshold was not fully met, implying that findings are reported as exploratory and should be interpreted with caution, pending replication with a larger, more diverse sample.
+
+# Appendix
+
+::: {.callout-note icon=false title="Box 1: Mathematics Teaching Self-Efficacy Instrument"}
+Please rate every statement on a scale from 1 to 5. In the following statements, the term **mathematics** refers to concepts associated with numbers, spatial sense, data and algebra.
+
+**Options:**
+
+1: Strongly disagree; 2: Disagree; 3: Neutral; 4: Agree; 5: Strongly Agree
+
+
+**Questions:**
+
+1. I know how to teach **mathematics** concepts effectively.
+2. I **do not** understand **mathematics** concepts well enough to be effective in teaching **mathematics**.
+3. When teaching **mathematics**, I will usually welcome student questions.
+4. I will typically be able to answer students' questions when teaching **mathematics**.
+:::
+
+::: {.callout-note icon=false title="Box 2: Financial Literacy Teaching Self-Efficacy Instrument"}
+Please rate every statement on a scale from 1 to 5. In the following statements, the term financial literacy refers to concepts associated with the financial literacy strand of the Ontario Mathematics Curriculum.
+
+**Options:**
+
+1: Strongly disagree; 2: Disagree; 3: Neutral; 4: Agree; 5: Strongly Agree
+
+
+**Questions:**
+
+1. I know how to teach financial literacy concepts effectively. 
+2. I do not understand financial literacy concepts well enough to be effective in teaching financial literacy. 
+3. When teaching financial literacy, I will usually welcome student questions.
+4. I will typically be able to answer students’ questions when teaching financial literacy.
+:::
+
+::: {.callout-note icon=false title="Box 3: Basic Literacy Questions"}
+
+1) **Numeracy:** Suppose you had $100 in a savings account and the interest rate was 2% per year. After 5 years, how much do you think you would have in the account if you left the money to grow?
+
+    i) More than $102
+    ii) Exactly $102
+    iii) Less than $102
+    iv) Do not know
+    v) Refusal
+
+2) **Inflation:** Imagine that the interest rate on your savings account was 1% per year and inflation was 2% per year. After 1 year, how much would you be able to buy with the money in this account?
+
+    i) More than today
+    ii) Exactly the same
+    iii) Less than today
+    iv) Do not know
+    v) Refusal
+
+3) **Time value of money:** Assume a friend inherits $10,000 today and his sibling inherits $10,000 3 years from now. Who is richer because of the inheritance?
+
+    i) My friend
+    ii) His sibling
+    iii) They are equally rich
+    iv) Do not know
+    v) Refusal
+
+4) **Money illusion:** Suppose that in the year 2010, your income has doubled and prices of all goods have doubled too. In 2010, how much will you be able to buy with your income?
+
+    i) More than today
+    ii) The same
+    iii) Less than today
+    iv) Do not know
+    v) Refusal
+
+:::
+
+::: {.callout-note icon=false title="Box 4: Advanced Literacy Questions"}
+1) Which of the following statements describes the main function of the stock market? 
+
+  i) The stock market helps to predict stock earnings 
+  ii) The stock market results in an increase in the price of stocks 
+  iii) The stock market brings people who want to buy stocks together with those who want to sell stocks
+  iv) None of the above
+  v) Do not know
+  vi) Refusal
+
+2) Which of the following statements is correct? If somebody buys the stock of firm B in the stock market: 
+  i) He owns a part of firm B 
+  ii) He has lent money to firm B
+  iii) He is liable for firm B’s debts
+  iv) None of the above
+  v) Do not know
+  vi) Refusal
+
+3) Which of the following statements is correct? If somebody buys a bond of firm B: 
+
+  i) He owns a part of firm B
+  ii) He has lent money to firm B
+  iii) He is liable for firm B’s debts
+  iv) None of the above
+  v) Do not know
+  iv) Refusal
+
+4) When an investor spreads his money among different assets (e.g., stocks, bonds, funds), the risk of losing money: 
+
+  i) Increases
+  ii) Decreases
+  (iii) Stays the same
+  iv) Do not know
+  v) Refusal.
+
+5) If the interest rate falls, what should happen to bond prices? 
+
+  i) Rise
+  ii) Fall
+  iii) Stay the same
+  iv) There is no clear correlation
+  v) Do not know
+  vi) Refusal. 
+:::
+
+::: {.callout-note icon=false title="Box 5: Additional Questions"}
+
+**Demographics:**
+
++ What is your year of birth?
++ What is your country of birth?
++ If not Canada, when did you immigrate to Canada?
++ What is your gender identity?
++ What is your primary language of choice?
++ What was your undergraduate degree in?
++ What is your teaching background?
++ If I/S: Intermediate-Sention, what are your teachable subjects?
+
+**Stock Market Participation:**
+
+1) Do you own individual stocks, bonds, mutual funds or index funds? 
+
+  i) Yes
+  ii) No
+  iii) Refusal.
+
+2) If your answer to the previous question was yes, how do you guide your investment decisions? 
+
++ Advice from family or friends
++ Advice from a financial advisor
++ Recommendations from social media (e.g., TikTok, Instagram, YouTube)
++ Online forums (e.g., X, Reddit, Discord, personal finance communities) 
++ Information from financial news/media (e.g., Bloomberg, CNBC)
++ Personal research (books, articles, academic papers)
++ Trading platforms' resources (e.g. Blossom App)
++ Automated tools/ChatGPT
++ Other (please specify): ________
++ Prefer not to say
+
+3) Which types of platforms do you prefer using for investment purposes?
+
++ Self-directed online investment platforms (e.g., Questrade, Wealthsimple, Robinhood, Interactive Brokers)
++ Bank-affiliated investment platforms (e.g., TD Direct Investing, RBC Direct Investing).
++ Cryptocurrency trading platforms (e.g., NDAX)
++ Social or community-based investing platforms (e.g., Blossom)
++ I do not currently use any investment platforms
+
+4) Once you have a permanent full-time position as a teacher, do you intend on owning individual stocks, bonds, mutual funds or index funds later? 
+
+  i) Yes
+  ii) No
+  iii) Refusal
+  iv) I already own individual stocks, bonds, mutual funds or index funds.
+:::
 
 
 # References
