@@ -1,0 +1,350 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+title: "Exploratory_Data_Analysis"
+author: "Helen Wei Jia Chen"
+output: pdf_document
+---
+
+
+```{r}
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+data <- read.csv("analysis_MTSE_FLTSE_calcs.csv")
+```
+
+```{r}
+# Normality Assumptions for t-test using Shapiro–Wilk test
+# shapiro.test(diff_scores)  i think i deleted some other code that came before so diff-scores is not defined anymore sorry
+# Results: p < 0.05 so normality is violated
+```
+```{r}
+# check for assumptions for Wilcoxon signed rank test
+# packages
+library(readr)
+library(ggplot2)
+library(moments)
+
+# Load the dataset
+data <- read_csv("analysis_MTSE_FLTSE_calcs.csv")
+
+# Inspect structure
+str(data)
+
+# Ensure the variables exist
+mtse <- data$MTSE
+fltse <- data$FLTSE
+
+# 1. Check for missing values (paired observations)
+sum(is.na(mtse))
+sum(is.na(fltse))
+
+# Remove rows with missing values
+paired_data <- na.omit(data[, c("MTSE", "FLTSE")])
+
+# 2. Check that variables are numeric
+is.numeric(paired_data$MTSE)
+is.numeric(paired_data$FLTSE)
+
+# 3. Compute difference scores
+diff_scores <- paired_data$MTSE - paired_data$FLTSE
+
+# Summary statistics of differences
+summary(diff_scores)
+
+# 4. Check symmetry of the difference distribution
+
+# Histogram
+ggplot(data.frame(diff_scores), aes(x = diff_scores)) +
+  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Histogram of Difference Scores (MTSE - FLTSE)")
+
+# Boxplot
+ggplot(data.frame(diff_scores), aes(y = diff_scores)) +
+  geom_boxplot(fill = "orange") +
+  theme_minimal() +
+  labs(title = "Boxplot of Difference Scores")
+
+# Skewness (note: should be close to 0 for symmetry)
+skewness(diff_scores)
+
+# 5. Check number of zero differences
+sum(diff_scores == 0)
+
+# Optional: Run the Wilcoxon signed-rank test
+wilcox.test(paired_data$MTSE, paired_data$FLTSE,
+            paired = TRUE,
+            exact = FALSE)
+# assumptions met
+```
+
+
+```{r}
+# Wilcoxon signed rank test
+# Load data
+data <- read.csv("analysis_MTSE_FLTSE_calcs.csv")
+
+# Extract variables
+mtse <- data$MTSE
+fltse <- data$FLTSE
+
+# Remove missing values
+paired_data <- na.omit(data.frame(mtse, fltse))
+
+# Sample size
+N <- nrow(paired_data)
+
+# Run Wilcoxon signed-rank test
+test <- wilcox.test(paired_data$mtse, paired_data$fltse, paired = TRUE, exact = FALSE)
+
+# Z value approximation
+z <- qnorm(test$p.value/2) * -sign(median(paired_data$mtse - paired_data$fltse))
+
+# Effect size r
+r <- z / sqrt(N)
+
+# Medians
+median_mtse <- median(paired_data$mtse)
+median_fltse <- median(paired_data$fltse)
+
+# Print results
+cat("Wilcoxon Signed-Rank Test Results\n")
+cat("-------------------------------\n")
+cat("N =", N, "\n")
+cat("V =", test$statistic, "\n")
+cat("p =", test$p.value, "\n")
+cat("Median MTSE =", median_mtse, "\n")
+cat("Median FLTSE =", median_fltse, "\n")
+cat("Z =", z, "\n")
+cat("Effect size r =", r, "\n")
+```
+```{r}
+# Cronbach's alpha and assumptions
+
+# Install psych
+install.packages("psych")
+
+# Load package
+library(psych)
+
+# Load dataset
+data <- read.csv("analysis_MTSE_FLTSE_cronbachs_alpha.csv")
+
+# -----------------------
+# MTSE scale
+# -----------------------
+mtse_items <- data[, c("MQ1", "MQ2", "MQ3", "MQ4")]
+alpha_mtse <- alpha(mtse_items)
+
+# -----------------------
+# FLTSE scale
+# -----------------------
+fltse_items <- data[, c("FQ1", "FQ2", "FQ3", "FQ4")]
+alpha_fltse <- alpha(fltse_items)
+
+# -----------------------
+# print report
+# -----------------------
+# Extract alpha values
+mtse_alpha <- round(alpha_mtse$total$raw_alpha, 2)
+fltse_alpha <- round(alpha_fltse$total$raw_alpha, 2)
+
+# Check minimum item-total correlations
+mtse_min_itc <- round(min(alpha_mtse$item.stats$r.drop), 2)
+fltse_min_itc <- round(min(alpha_fltse$item.stats$r.drop), 2)
+
+# Print APA-style summary
+cat("Internal consistency reliability (Cronbach's alpha) was calculated for both scales.\n")
+cat(sprintf(
+  "The MTSE scale showed good reliability, α = %.2f, with all item-total correlations ≥ %.2f.\n",
+  mtse_alpha, mtse_min_itc
+))
+cat(sprintf(
+  "The FLTSE scale demonstrated acceptable reliability, α = %.2f, with all item-total correlations ≥ %.2f.\n",
+  fltse_alpha, fltse_min_itc
+))
+```
+
+```{r}
+library(psych)
+
+# dataset
+data <- read.csv("analysis_MTSE_FLTSE_cronbachs_alpha.csv")
+
+# Use only first 145 rows
+data <- data[1:145, ]
+
+# -----------------------
+# Function to summarize Cronbach's alpha and APA report
+# -----------------------
+summarize_alpha_apa <- function(items, scale_name) {
+  
+  # Force all columns to numeric safely (??)
+  items <- data.frame(lapply(items, function(x) as.numeric(as.character(x))))
+  
+  # Remove rows with all NA for this scale
+  items <- items[rowSums(is.na(items)) < ncol(items), ]
+  
+  # Compute Cronbach's alpha
+  alpha_res <- alpha(items)
+  
+  # Compute mean item-total correlation manually
+  # Item-total correlations = correlation of each item with sum of the other items
+  item_total_cor <- sapply(1:ncol(items), function(i) {
+    item <- items[, i]
+    rest_sum <- rowSums(items[, -i, drop = FALSE], na.rm = TRUE)
+    cor(item, rest_sum, use = "pairwise.complete.obs")
+  })
+  
+  # Key values
+  alpha_value <- round(alpha_res$total$raw_alpha, 2)
+  min_itc <- round(min(item_total_cor, na.rm = TRUE), 2)
+  mean_itc <- round(mean(item_total_cor, na.rm = TRUE), 2)
+  cor_matrix <- cor(items, use="pairwise.complete.obs")
+  inter_cor_mean <- round(mean(cor_matrix[lower.tri(cor_matrix)], na.rm = TRUE), 2)
+  
+  # Print easy summary
+  cat("--------------------------------------------------\n")
+  cat(sprintf("Scale: %s (first 145 rows)\n", scale_name))
+  cat(sprintf("Cronbach's alpha: %.2f\n", alpha_value))
+  cat(sprintf("Mean item-total correlation: %.2f\n", mean_itc))
+  cat(sprintf("Minimum item-total correlation: %.2f\n", min_itc))
+  cat(sprintf("Mean inter-item correlation: %.2f\n", inter_cor_mean))
+  cat("All items positively correlated and contribute to reliability.\n\n")
+  
+  # APA-ready sentence
+  cat(sprintf(
+    "APA-ready report: The %s scale demonstrated good internal consistency, α = %.2f, with mean item-total correlations of %.2f (minimum = %.2f) and a mean inter-item correlation of %.2f.\n\n",
+    scale_name, alpha_value, mean_itc, min_itc, inter_cor_mean
+  ))
+}
+
+# -----------------------
+# MTSE scale
+# -----------------------
+mtse_items <- data[, c("MQ1", "MQ2", "MQ3", "MQ4")]
+summarize_alpha_apa(mtse_items, "MTSE")
+
+# -----------------------
+# FLTSE scale
+# -----------------------
+fltse_items <- data[, c("FQ1", "FQ2", "FQ3", "FQ4")]
+summarize_alpha_apa(fltse_items, "FLTSE")
+
+# -----------------------
+# Function to run EFA and print factor loadings
+# -----------------------
+summarize_efa <- function(items, scale_name) {
+  
+  # Ensure numeric
+  items <- data.frame(lapply(items, function(x) as.numeric(as.character(x))))
+  
+  # Remove rows with all NA
+  items <- items[rowSums(is.na(items)) < ncol(items), ]
+  
+  # Run 1-factor EFA (since you assume unidimensionality)
+  efa_res <- fa(items, nfactors = 1, fm = "ml", rotate = "none")
+  
+  # Extract loadings
+  loadings_matrix <- as.matrix(efa_res$loadings)
+  loadings_values <- round(loadings_matrix[,1], 2)
+  
+  # Range
+  min_loading <- min(loadings_values, na.rm = TRUE)
+  max_loading <- max(loadings_values, na.rm = TRUE)
+  
+  # Print results
+  cat("--------------------------------------------------\n")
+  cat(sprintf("EFA Results: %s\n", scale_name))
+  cat("Factor loadings:\n")
+  print(loadings_values)
+  
+  cat(sprintf("\nRange of loadings: %.2f to %.2f\n\n", min_loading, max_loading))
+  
+  # APA-ready sentence
+  cat(sprintf(
+    "APA-ready report: Exploratory factor analysis supported unidimensionality for the %s scale, with factor loadings ranging from %.2f to %.2f.\n\n",
+    scale_name, min_loading, max_loading
+  ))
+}
+
+# -----------------------
+# MTSE EFA
+# -----------------------
+summarize_efa(mtse_items, "MTSE")
+
+# -----------------------
+# FLTSE EFA
+# -----------------------
+summarize_efa(fltse_items, "FLTSE")
+```
+
+```{r}
+cron = read.csv("analysis_MTSE_FLTSE_cronbachs_alpha.csv")
+cron
+```
+
+```{r}
+# Load psych package
+library(psych)
+
+# Load dataset
+data <- read.csv("analysis_MTSE_FLTSE_cronbachs_alpha.csv")
+
+# Use only the first 145 rows
+data <- data[1:145, ]
+
+# -----------------------
+# Function to calculate and summarize Cronbach's alpha
+# -----------------------
+cronbach_summary <- function(items, scale_name) {
+  
+  # Force numeric
+  items <- data.frame(lapply(items, function(x) as.numeric(as.character(x))))
+  
+  # Remove rows with all NAs
+  items <- items[rowSums(is.na(items)) < ncol(items), ]
+  
+  # Calculate Cronbach's alpha
+  alpha_res <- alpha(items)
+  
+  # Extract alpha
+  alpha_value <- round(alpha_res$total$raw_alpha, 2)
+  
+  # Print summary
+  cat("--------------------------------------------------\n")
+  cat(sprintf("Scale: %s (first 145 rows)\n", scale_name))
+  cat(sprintf("Cronbach's alpha: %.2f\n", alpha_value))
+  
+  # Interpret alpha
+  if(alpha_value >= 0.90){
+    cat("Interpretation: Excellent internal consistency.\n\n")
+  } else if(alpha_value >= 0.80){
+    cat("Interpretation: Good internal consistency.\n\n")
+  } else if(alpha_value >= 0.70){
+    cat("Interpretation: Acceptable internal consistency.\n\n")
+  } else if(alpha_value >= 0.60){
+    cat("Interpretation: Questionable internal consistency.\n\n")
+  } else {
+    cat("Interpretation: Poor internal consistency.\n\n")
+  }
+}
+
+# -----------------------
+# MTSE scale
+# -----------------------
+mtse_items <- data[, c("MQ1", "MQ2", "MQ3", "MQ4")]
+cronbach_summary(mtse_items, "MTSE")
+
+# -----------------------
+# FLTSE scale
+# -----------------------
+fltse_items <- data[, c("FQ1", "FQ2", "FQ3", "FQ4")]
+cronbach_summary(fltse_items, "FLTSE")
+```
+

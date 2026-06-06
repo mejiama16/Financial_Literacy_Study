@@ -61,11 +61,71 @@ The survey used in this study was composed of four sections designed to capture 
 
 # Results
 
+
 ## Financial Literacy Knowledge
+
+The average financial literacy score was 67% for basic questions (M=0.68 , SD=0.3) while the average score on advanced items 52% (M=0.53 , SD=0.3 ) . The distribution of basic scores was left-skewed, with most candidates answering a majority of questions correctly, whereas advanced scores were more dispersed, reflecting greater variability in candidates' familiarity with investment concepts. The overall index was bimodal, suggesting the sample contains two broad groups: one with moderate financial knowledge (answer ~45% of questions correctly) and one with high overall literacy (answer ~90% of questions correctly).
+
+![Distribution of Index Scores.](figure_01.png){#fig-1 fig-align="center" width="80%"}
+
+Figure 2 depicts how participants score across each of the different questions and the related concept that was being assessed. Each of the basic financial literacy questions were answered correctly by at least 50% of the survey takers, although the time value of money question: “Assume a friend inherits $10,000 today and his sibling inherits $10,000 3 years from now. Who is richer because of the inheritance?”, had the lowest correct response rate. In contrast, performance on the advanced questions was lower overall.
+
+![Proportion of Correct Responses by Question Type.](figure_02.png){#fig-2 fig-align="center" width="80%"}
+
+The most notable gap appeared on the bond pricing question ('If the interest rate falls, what should happen to bond prices?’), which was answered incorrectly by over 70% of respondents, indicating a significant knowledge gap regarding fixed income. More than 50% selected 'Do not know', while the correct answer 'Rise' (29%) and its opposite 'Fall' (24%) were selected at similar rates. This stands in contrast to all other questions, where the correct answer was the most frequent response, and may partly reflect survey fatigue given this was the final question.
+
+![Response Distribution per Question.](figure_03.png){#fig-3 fig-align="center" width="70%"}
+
+Males outperformed female participants in all three indices. For the basic index, scores indicate both males and females answer more than half  the questions correctly on average, with males leading by only a small advantage. This gap between male and female appears much larger for the advanced index. Particularly, this gap mirrors the pattern observed in stock market participation: 57% of male candidates invest compared to 38% of female candidates, providing evidence that those who have lower financial literacy tend to invest less, consistent with van Rooij et al. (2011).
+
+![Financial Literacy by Gender](figure_04.png){#fig-4 fig-align="center" width="50%"}
+
+
+Overall, 42% of teacher candidates in the sample reported participating in the stock market. More specifically, although 75% of the sample were female teacher candidates, only 38% of them invest in the stock market, compared to 57% of the male respondents.
+
+![Financial Literacy Scores by Stock Market Participation.](figure_07.png){#fig-7 fig-align="center" width="40%"}
+
+
+To complement the findings in Section 3.2, Figure 8 demonstrates that candidates with STEM & Health Sciences backgrounds, who also recorded the highest financial literacy scores, are the only undergraduate group where investors outnumber non-investors, suggesting a possible association between financial knowledge and investment behavior.
+
+![Stock Market Participation by Undergraduate Category.](figure_08.png){#fig-8 fig-align="center" width="70%"}
+
+
+As shown in Figure 9, participants with positive financial behaviours, such as stock market participation, scored higher across all financial literacy indices computed compared to non investors. A logistic regression (Table 1, Appendix) found a positive association between overall financial literacy knowledge and log odds of stock market participation (β = 1.301, p = 0.0548), which, while marginally below conventional significance thresholds, is consistent with van Rooij et al. (2011). When demographic controls are introduced, the coefficient remains positive but the p-value increases, suggesting that financial literacy shares variance with predictors like gender and undergraduate background, variables that are themselves associated with both financial knowledge and investment behavior, making it difficult to isolate literacy's independent contribution to the log odds of stock market participation. 
+
+![Financial Literacy Scores by Stock Market Participation](figure_09.png){#fig-9 fig-align="center" width="40%"}
 
 ## Mathematics and Financial Literacy Teaching Self Efficacy
 
+We measured and compared the financial literacy and mathematics teaching self-efficacy among n=145 Ontario pre-service teachers using the adapted MTSE and FLTSE scales developed for this study. First, a Cronbach’s 𝛼 test was performed for both scales to measure the internal reliability of the scales. The results indicated good internal reliability for both MTSE (4 items, 𝛼 = .80, N = 145) and FLTSE (4 items, 𝛼 = .83, N = 145). 
+
+The data for both MTSE and FLTSE failed to meet 𝜏-equivalence, which assumes that all items contribute equally. As such, an additional McDonald’s ω test was conducted to confirm if the assumption failure led to an important underestimation of the 𝛼. McDonald’s ω indicated good internal reliability for both MTSE (ω = .81) and FLTSE  (ω = .84). Both MTSE and FLTSE scales showed good internal reliability and unidimensionality. As both 𝛼 and ω values are relatively close, it suggests that the violation of 𝜏-equivalence did not meaningfully distort the reliability scores of the scales.
+
+Exploratory factor analysis supported the assumption of unidimensionality for the MTSE scale with factor loadings ranging from 0.45 to 0.85. For the FLTSE scale, factor loadings ranged from 0.39 to 0.90, with one item slightly below the conventional 0.40 threshold. Kaiser-Meyer-Olkin (KMO) scores were also acceptable (MTSE = 0.71; FLTSE = 0.72) and Barlett’s test of Sphericity was significant (p < .001), supporting the suitability of the data for factor analysis. Additionally, confirmatory factor analysis showed minor correlated residuals, indicating existing but not substantial correlation between items beyond the latent construct. The minor correlated residues might indicate some content overlap across items but do not compromise the overall internal consistency of the instruments. More precisely, the residual correlations are situated at the items 3 (“when teaching mathematics/financial literacy, I will usually welcome student questions”) and 4 (“I will typically be able to answer students’ questions when teaching mathematics/financial literacy”) in both scales. The overlap might be explained by the common broader scenario shared between the two items, in which both consider the scenario of a student asking a question about the content at hand. Specifically, item 3 emphasizes the attitudes about being approached for a question while item 4 focuses on the efficacy for the capacity of answering the content question. Overall, both scales are still psychometrically sound and can be used for the subsequent analyses.
+
+![Stock Market Participation by Undergraduate Category.](figure_10.png){#fig-10 fig-align="center" width="70%"}
+
+Lastly, a Wilcoxon signed rank test was conducted to compare both MTSE and FLTSE scores. The FLTSE scores (Mdn = 3.5, IQR = 1) were significantly lower than the MTSE scores (Mdn = 4, IQR = 0.75), V = 5235.50, p < .001, r = .54 (Figure 2). This result indicates that the difference between the median FLTSE and MTSE scores is statistically significant. In other words, it indicated a substantial difference between pre-service teachers’ self-efficacy in mathematics teaching and financial literacy teaching. As is also illustrated in Figure 2, financial literacy teaching self efficacy scores are generally lower than mathematics teaching self efficacy.
+
 ## Calibration
+
+There was a significant positive correlation between financial literacy teaching self-efficacy and conceptual competency, r(143) = .24, p = .004, two-tailed, suggesting that participants who demonstrated greater financial literacy knowledge also reported higher perceived capability to teach these concepts.
+
+Miscalibration Across Competency Quartiles
+
+Miscalibration (SE_z − Comp_z) differed significantly across competency quartiles, F(3, 141) = 28.24, p < .001, η² = .38. The mean miscalibration across quartile (Q1: lowest competency; Q4: highest competency) showed a systematic pattern:
+
++ Q1 (n = 55): +0.859 (SD = 0.990)
++ Q2 (n = 23): -0.110 (SD = 1.055)
++ Q3 (n = 33): -0.244 (SD = 0.931)
++ Q4 (n = 34): -1.078 (SD = 0.983) 
+
+Tukey HSD post hoc comparisons showed that Q1 had significantly higher mean miscalibration than Q2, Q3, and Q4; Q4 had significantly lower mean miscalibration than Q1, Q2, and Q3; Q2 and Q3 did not differ significantly from each other. 
+
+Importantly, this pattern should be interpreted as “relatively” miscalibration (or relative overestimation/underestimation), instead of being treated as evidence that Q1/Q4 participants were highly confident/underconfident in absolute terms. For instance, Q1 participants’ positive miscalibration results from the fact that their demonstrated competency was low compared to their self-efficacy, not because their self-efficacy was extremely high. 
+
+![Miscalibration by Competency Quartile.](figure_11.png){#fig-11 fig-align="center" width="80%"}
+
 
 # Limitations
 
