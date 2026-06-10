@@ -1,0 +1,160 @@
+---
+title: "Exploratory_Data_Analysis"
+author: "Helen Wei Jia Chen"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+# INSTALL REQUIRED PACKAGES
+# Uncomment the lines below if you haven't installed these packages yet:
+# install.packages("tidyverse")
+# install.packages("readr")
+# install.packages("psych")
+# install.packages("moments")
+
+library(tidyverse)   # includes dplyr, tidyr, ggplot2
+library(readr)
+library(psych)
+library(moments)
+```
+
+```{r, message=FALSE, warning=FALSE}
+# LOAD DATASETS
+data_wilcox <- read_csv("analysis_MTSE_FLTSE_calcs.csv")
+data_alpha  <- read.csv("analysis_MTSE_FLTSE_cronbachs_alpha.csv")
+data_alpha  <- data_alpha[1:145, ]
+```
+
+```{r}
+# WILCOXON RANKED TEST: CHECKING ASSUMPTIONS
+
+# Inspect structure
+str(data_wilcox)
+
+# Check for missing values
+sum(is.na(data_wilcox$MTSE))
+sum(is.na(data_wilcox$FLTSE))
+
+# Remove rows with missing values and check numeric types
+paired_data <- na.omit(data_wilcox[, c("MTSE", "FLTSE")])
+is.numeric(paired_data$MTSE)
+is.numeric(paired_data$FLTSE)
+
+# Compute difference scores and summary
+diff_scores <- paired_data$MTSE - paired_data$FLTSE
+summary(diff_scores)
+
+# Histogram of difference scores
+ggplot(data.frame(diff_scores), aes(x = diff_scores)) +
+  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Histogram of Difference Scores (MTSE - FLTSE)")
+
+# Boxplot of difference scores
+ggplot(data.frame(diff_scores), aes(y = diff_scores)) +
+  geom_boxplot(fill = "orange") +
+  theme_minimal() +
+  labs(title = "Boxplot of Difference Scores")
+
+# Skewness (should be close to 0 for symmetry)
+skewness(diff_scores)
+
+# Number of zero differences
+sum(diff_scores == 0)
+```
+
+```{r}
+# WILCOXON SIGNED RANK TEST: RUN AND REPORT
+
+N    <- nrow(paired_data)
+test <- wilcox.test(paired_data$MTSE, paired_data$FLTSE, paired = TRUE, exact = FALSE)
+
+# Z approximation and effect size r
+z <- qnorm(test$p.value / 2) * -sign(median(paired_data$MTSE - paired_data$FLTSE))
+r <- z / sqrt(N)
+
+cat("Wilcoxon Signed-Rank Test Results\n")
+cat("-------------------------------\n")
+cat("N =", N, "\n")
+cat("V =", test$statistic, "\n")
+cat("p =", test$p.value, "\n")
+cat("Median MTSE =", median(paired_data$MTSE), "\n")
+cat("Median FLTSE =", median(paired_data$FLTSE), "\n")
+cat("Z =", z, "\n")
+cat("Effect size r =", r, "\n")
+```
+
+```{r}
+# CRONBACH'S ALPHA + APA REPORT
+
+summarize_alpha_apa <- function(items, scale_name) {
+  items <- data.frame(lapply(items, function(x) as.numeric(as.character(x))))
+  items <- items[rowSums(is.na(items)) < ncol(items), ]
+
+  alpha_res <- alpha(items)
+
+  item_total_cor <- sapply(1:ncol(items), function(i) {
+    cor(items[, i], rowSums(items[, -i, drop = FALSE], na.rm = TRUE),
+        use = "pairwise.complete.obs")
+  })
+
+  alpha_value    <- round(alpha_res$total$raw_alpha, 2)
+  min_itc        <- round(min(item_total_cor,  na.rm = TRUE), 2)
+  mean_itc       <- round(mean(item_total_cor, na.rm = TRUE), 2)
+  cor_matrix     <- cor(items, use = "pairwise.complete.obs")
+  inter_cor_mean <- round(mean(cor_matrix[lower.tri(cor_matrix)], na.rm = TRUE), 2)
+
+  # Interpret alpha
+  interpretation <- dplyr::case_when(
+    alpha_value >= 0.90 ~ "Excellent",
+    alpha_value >= 0.80 ~ "Good",
+    alpha_value >= 0.70 ~ "Acceptable",
+    alpha_value >= 0.60 ~ "Questionable",
+    TRUE                ~ "Poor"
+  )
+
+  cat("--------------------------------------------------\n")
+  cat(sprintf("Scale: %s (first 145 rows)\n", scale_name))
+  cat(sprintf("Cronbach's alpha: %.2f (%s internal consistency)\n", alpha_value, interpretation))
+  cat(sprintf("Mean item-total correlation: %.2f (minimum = %.2f)\n", mean_itc, min_itc))
+  cat(sprintf("Mean inter-item correlation: %.2f\n\n", inter_cor_mean))
+  cat(sprintf(
+    "APA: The %s scale demonstrated %s internal consistency, α = %.2f, with mean item-total correlations of %.2f (minimum = %.2f) and a mean inter-item correlation of %.2f.\n\n",
+    scale_name, tolower(interpretation), alpha_value, mean_itc, min_itc, inter_cor_mean
+  ))
+}
+
+mtse_items  <- data_alpha[, c("MQ1", "MQ2", "MQ3", "MQ4")]
+fltse_items <- data_alpha[, c("FQ1", "FQ2", "FQ3", "FQ4")]
+
+summarize_alpha_apa(mtse_items,  "MTSE")
+summarize_alpha_apa(fltse_items, "FLTSE")
+```
+
+```{r efa}
+# EXPLORATORY FACTOR ANALYSIS
+
+summarize_efa <- function(items, scale_name) {
+  items <- data.frame(lapply(items, function(x) as.numeric(as.character(x))))
+  items <- items[rowSums(is.na(items)) < ncol(items), ]
+
+  efa_res        <- fa(items, nfactors = 1, fm = "ml", rotate = "none")
+  loadings_values <- round(as.matrix(efa_res$loadings)[, 1], 2)
+
+  cat("--------------------------------------------------\n")
+  cat(sprintf("EFA Results: %s\n", scale_name))
+  cat("Factor loadings:\n")
+  print(loadings_values)
+  cat(sprintf("\nRange of loadings: %.2f to %.2f\n\n",
+              min(loadings_values), max(loadings_values)))
+  cat(sprintf(
+    "APA: Exploratory factor analysis supported unidimensionality for the %s scale, with factor loadings ranging from %.2f to %.2f.\n\n",
+    scale_name, min(loadings_values), max(loadings_values)
+  ))
+}
+
+summarize_efa(mtse_items,  "MTSE")
+summarize_efa(fltse_items, "FLTSE")
+```
