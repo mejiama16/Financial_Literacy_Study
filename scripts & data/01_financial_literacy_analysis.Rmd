@@ -1,0 +1,252 @@
+---
+title: "Financial Literacy Analysis"
+author: "Mariana Garcia Mejia"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r message=FALSE, warning=FALSE}
+# LOAD LIBRARIES
+library(tidyverse)   # dplyr, tidyr, ggplot2
+library(scales)      # percent formatting on axes
+```
+
+```{r load-data}
+# LOAD DATASET
+df <- read.csv("analysis_data.csv", fileEncoding = "latin1")
+```
+
+## 1. Exploratory Data Analysis
+
+```{r scores-summary}
+# Summary of the scores
+indices <- c("advanced", "basic", "overall")
+averages <- c(mean(df$advanced_index), mean(df$basic_index), mean(df$overall_index))
+sd <- c(sd(df$advanced_index), sd(df$basic_index), sd(df$overall_index))
+
+summary <- tibble::tibble(indices, averages, sd)
+summary
+```
+
+```{r gender-pie}
+# Gender distribution — pie chart
+gender_counts <- df %>%
+  count(gender) %>%
+  filter(!is.na(gender))
+
+ggplot(gender_counts, aes(x = "", y = n, fill = gender)) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  geom_text(aes(label = paste0(round(n / sum(n) * 100), "%")),
+            position = position_stack(vjust = 0.5)) +
+  theme_void() +
+  labs(title = "Gender Distribution", fill = NULL)
+```
+
+```{r summary-gender}
+# Stock market participation by gender
+summary_gender <- df %>%
+  filter(gender %in% c("male", "female", "non binary")) %>%
+  group_by(gender) %>%
+  summarise(
+    n_obs              = n(),
+    n_yes              = sum(stock_mkt_participation_clean, na.rm = TRUE),
+    n_no               = n_obs - n_yes,
+    participation_rate = round(mean(stock_mkt_participation_clean, na.rm = TRUE) * 100, 2)
+  )
+
+print(summary_gender)
+```
+
+```{r summary-undergrad}
+# Stock market participation by undergraduate category
+summary_undergrad <- df %>%
+  group_by(undergrad_category) %>%
+  summarise(
+    n_obs              = n(),
+    n_yes              = sum(stock_mkt_participation_clean, na.rm = TRUE),
+    n_no               = n_obs - n_yes,
+    participation_rate = round(mean(stock_mkt_participation_clean, na.rm = TRUE) * 100, 2)
+  )
+
+print(summary_undergrad)
+```
+
+```{r summary-country}
+# Stock market participation by country of birth
+summary_country <- df %>%
+  group_by(born_in_canada) %>%
+  summarise(
+    n_obs              = n(),
+    n_yes              = sum(stock_mkt_participation_clean, na.rm = TRUE),
+    participation_rate = round(mean(stock_mkt_participation_clean, na.rm = TRUE) * 100, 2)
+  ) %>%
+  mutate(born_in_canada = ifelse(born_in_canada == 1, "Born in Canada", "Born Outside Canada"))
+
+print(summary_country)
+```
+
+```{r summary-scores-binary}
+# Average literacy scores by stock market participation
+summary_scores <- df %>%
+  group_by(stock_mkt_participation_clean) %>%
+  summarise(
+    n_obs         = n(),
+    avg_basic     = round(mean(basic_index,    na.rm = TRUE), 2),
+    avg_advanced  = round(mean(advanced_index, na.rm = TRUE), 2),
+    avg_overall   = round(mean(overall_index,  na.rm = TRUE), 2)
+  ) %>%
+  mutate(stock_mkt_participation_clean = ifelse(
+    stock_mkt_participation_clean == 1,
+    "Participates in Stock Market", "Does Not Participate / Refusal"
+  ))
+
+print(summary_scores)
+```
+
+# 2. Figures in the final paper
+
+## Figure 1: Distribution of Index Scores
+```{r figure1}
+# Figure 1: Distribution of Index Scores
+df %>%
+  select(basic_index, advanced_index, overall_index) %>%
+  pivot_longer(everything(), names_to = "Index", values_to = "Value") %>%
+  mutate(Index = recode(Index,
+                        "basic_index"    = "Basic Index",
+                        "advanced_index" = "Advanced Index",
+                        "overall_index"  = "Overall Index")) %>%
+  ggplot(aes(x = Value)) +
+  geom_histogram(bins = 30, fill = "#0072B2", color = "white") +
+  facet_wrap(~Index) +
+  labs(
+    title = "Distribution of Index Scores",
+    x = "Value", y = "Frequency"
+  ) +
+  theme_minimal()
+```
+
+## Figure 2: Proportion of Correct Responses by Question Type
+```{r figure2}
+basic_questions    <- c("q1_basic_correct", "q2_basic_correct",
+                        "q3_basic_correct", "q4_basic_correct")
+advanced_questions <- c("q1_advanced_correct", "q2_advanced_correct", "q3_advanced_correct",
+                        "q4_advanced_correct", "q5_advanced_correct")
+
+basic_labels    <- c("Q1 — Numeracy", "Q2 — Inflation",
+                     "Q3 — Time Value", "Q4 — Money Illusion")
+advanced_labels <- c("Q1 — Stock Market Function", "Q2 — Stock Ownership",
+                     "Q3 — Bond Ownership", "Q4 — Diversification",
+                     "Q5 — Bond/Interest Rate")
+
+basic_df <- data.frame(
+  Question = basic_labels,
+  Proportion = colMeans(df[, basic_questions], na.rm = TRUE),
+  Type = "Basic"
+)
+advanced_df <- data.frame(
+  Question = advanced_labels,
+  Proportion = colMeans(df[, advanced_questions], na.rm = TRUE),
+  Type = "Advanced"
+)
+
+all_q <- bind_rows(basic_df, advanced_df)
+
+ggplot(all_q, aes(x = Question, y = Proportion)) +
+  geom_col(fill = "steelblue") +
+  scale_y_continuous(labels = percent_format()) +
+  facet_wrap(~Type, scales = "free_x") +
+  labs(
+    title = "Proportion of Correct Responses by Question Type",
+    x = NULL, y = "Proportion Correct"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+## Figure 3: Questions Breakdown
+
+
+## Figure 4: Financial Literacy by Gender
+```{r figure4}
+df_gender <- df %>%
+  filter(gender %in% c("male", "female")) %>%
+  group_by(gender) %>%
+  summarise(
+    Basic    = mean(basic_index,    na.rm = TRUE),
+    Advanced = mean(advanced_index, na.rm = TRUE),
+    Overall  = mean(overall_index,  na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(Basic, Advanced, Overall),
+               names_to = "Index", values_to = "Score")
+
+palette <- c("female" = "#FF7F0E", "male" = "#0072B2")
+
+ggplot(df_gender, aes(x = Index, y = Score, fill = gender)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = palette, labels = c("Female", "Male")) +
+  ylim(0, 1) +
+  labs(
+    title = "Financial Literacy by Gender",
+    x = NULL, y = "Average Score", fill = NULL
+  ) +
+  theme_minimal()
+```
+
+## Figure 5: Stock Market Participation Pie Chart
+```{r figure5}
+stock_counts <- df %>%
+  count(stock_mkt_participation) %>%
+  filter(!is.na(stock_mkt_participation))
+
+ggplot(stock_counts, aes(x = "", y = n, fill = stock_mkt_participation)) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  geom_text(aes(label = paste0(round(n / sum(n) * 100), "%")),
+            position = position_stack(vjust = 0.5)) +
+  theme_void() +
+  labs(
+    title = "Do you own individual stocks, bonds, mutual funds or index funds?",
+    fill = NULL
+  )
+```
+
+## Figure 6: Stock Market Participation by Undergraduate Category
+```{r}
+# Figure 6: Stock Market Participation by Undergraduate Category
+df %>%
+  mutate(Participation = ifelse(stock_mkt_participation_clean == 1, "Yes", "No")) %>%
+  ggplot(aes(x = undergrad_category, fill = Participation)) +
+  geom_bar(position = "dodge") +
+  labs(
+    title  = "Stock Market Participation by Undergraduate Category",
+    x      = "\nUndergraduate Category",
+    y      = "Number of Respondents",
+    fill   = "Stock Market Participation"
+  ) +
+  theme_minimal()
+```
+
+## Figure 7: Financial Literacy Scores by Stock Market Participation
+```{r figure7}
+means_long <- df %>%
+  group_by(stock_mkt_participation_clean) %>%
+  summarise(
+    Basic    = mean(basic_index,    na.rm = TRUE),
+    Advanced = mean(advanced_index, na.rm = TRUE),
+    Overall  = mean(overall_index,  na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(Basic, Advanced, Overall),
+               names_to = "Index", values_to = "Score") %>%
+  mutate(participation = ifelse(stock_mkt_participation_clean == 1, "Yes", "No / Refusal"))
+
+ggplot(means_long, aes(x = participation, y = Score, fill = Index)) +
+  geom_col(position = "dodge") +
+  ylim(0, 0.8) +
+  labs(
+    title = "Financial Literacy Scores by Stock Market Participation",
+    x = NULL, y = "Average Financial Literacy Score (%)", fill = NULL
+  ) +
+  theme_minimal()
+```

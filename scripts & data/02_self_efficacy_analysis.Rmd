@@ -9,11 +9,12 @@ output: pdf_document
 ---
 
 
-```{r}
+```{r, warning=FALSE}
 library(tidyverse)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+# install.packages("moments")
 data <- read.csv("analysis_MTSE_FLTSE_calcs.csv")
 ```
 
@@ -22,12 +23,13 @@ data <- read.csv("analysis_MTSE_FLTSE_calcs.csv")
 # shapiro.test(diff_scores)  i think i deleted some other code that came before so diff-scores is not defined anymore sorry
 # Results: p < 0.05 so normality is violated
 ```
+
 ```{r}
 # check for assumptions for Wilcoxon signed rank test
 # packages
 library(readr)
 library(ggplot2)
-library(moments)
+# library(moments)
 
 # Load the dataset
 data <- read_csv("analysis_MTSE_FLTSE_calcs.csv")
@@ -123,6 +125,8 @@ cat("Median FLTSE =", median_fltse, "\n")
 cat("Z =", z, "\n")
 cat("Effect size r =", r, "\n")
 ```
+
+
 ```{r}
 # Cronbach's alpha and assumptions
 
