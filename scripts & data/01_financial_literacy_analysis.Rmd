@@ -10,6 +10,12 @@ output:
 # LOAD LIBRARIES
 library(tidyverse)   # dplyr, tidyr, ggplot2
 library(scales)      # percent formatting on axes
+
+# Regression libraries
+library(car)         # vif()
+library(lmtest)      # dwtest()
+library(stargazer)   # regression tables
+library(fastDummies) # dummy variables
 ```
 
 ```{r load-data}
@@ -249,4 +255,248 @@ ggplot(means_long, aes(x = participation, y = Score, fill = Index)) +
     x = NULL, y = "Average Financial Literacy Score (%)", fill = NULL
   ) +
   theme_minimal()
+```
+
+# Regressions
+
+```{r warning=FALSE}
+# DATA PREPARATION
+
+df <- df %>%
+  mutate(
+    stock_mkt_binary   = ifelse(trimws(tolower(stock_mkt_participation)) == "yes", 1L, 0L),
+    gender_clean       = trimws(tolower(gender)),
+    born_in_canada_bin = ifelse(trimws(tolower(as.character(born_in_canada)))
+                                  %in% c("true", "yes", "1"), 1L, 0L)
+  ) %>%
+  filter(gender_clean %in% c("male", "female"))
+
+df_model <- df %>%
+  mutate(
+    undergrad_category = trimws(tolower(undergrad_category)),
+    gender_clean       = trimws(tolower(gender_clean))
+  ) %>%
+  fastDummies::dummy_cols(
+    select_columns           = c("undergrad_category", "gender_clean"),
+    remove_selected_columns  = TRUE,
+    remove_most_frequent_dummy = FALSE
+  )
+
+# Fix all column names — replace spaces and special characters with underscores
+names(df_model) <- gsub("[^a-zA-Z0-9_]", "_", names(df_model))
+
+# Print column names to verify
+# names(df_model)
+
+# Identify and drop reference dummies
+ref_undergrad <- names(df_model)[grepl("undergrad_category_", names(df_model)) &
+                                   grepl("arts", names(df_model))]
+ref_gender    <- names(df_model)[grepl("gender_clean_female", names(df_model))]
+
+undergrad_dummies <- setdiff(
+  names(df_model)[grepl("undergrad_category_", names(df_model))],
+  ref_undergrad
+)
+gender_dummies <- setdiff(
+  names(df_model)[grepl("gender_clean_", names(df_model))],
+  ref_gender
+)
+
+# Assemble modelling data and drop NAs
+model_vars <- c("age", "duration_minutes", "born_in_canada_bin",
+                "stock_mkt_binary", "overall_index", "basic_index", "advanced_index",
+                gender_dummies, undergrad_dummies)
+
+predictors <- df_model %>%
+  select(all_of(model_vars)) %>%
+  drop_na() %>%
+  mutate(across(everything(), as.numeric))
+
+cat("Sample size after dropping missing values:", nrow(predictors), "\n")
+cat("Stock market participants:", sum(predictors$stock_mkt_binary), "\n")
+cat("Non-participants:", sum(predictors$stock_mkt_binary == 0), "\n")
+```
+
+```{r ols-regression}
+# OLS: OVERALL ~ DEMOGRAPHICS
+
+undergrad_dummies <- c(
+  "undergrad_category_education___child_studies",
+  "undergrad_category_humanities___languages",
+  "undergrad_category_social_sciences",
+  "undergrad_category_stem___health_sciences"
+)
+
+gender_dummies <- c("gender_clean_male")
+
+lm_cols <- c("age", "duration_minutes", "born_in_canada_bin",
+             gender_dummies, undergrad_dummies)
+
+lm_model <- lm(
+  reformulate(lm_cols, response = "overall_index"),
+  data = predictors
+)
+
+summary(lm_model)
+```
+
+```{r ols-diagnostics, fig.width=12, fig.height=10}
+# OLS ASSUMPTION DIAGNOSTICS
+par(mfrow = c(2, 2))
+plot(lm_model,
+     sub.caption = "Figure 11: Linear Regression — Assumption Diagnostic Plots")
+
+# Durbin-Watson
+dw <- dwtest(lm_model)
+cat(sprintf("\nDurbin-Watson statistic: %.3f\n", dw$statistic))
+cat(sprintf("  p-value: %.4f\n", dw$p.value))
+cat(sprintf("  → %s\n",
+            ifelse(dw$statistic > 1.5 & dw$statistic < 2.5,
+                   "OK — no autocorrelation concern", "Flag in paper")))
+```
+
+```{r warning=FALSE}
+# LOGISTIC REGRESSION: FULL
+glm_cols <- c("overall_index", "age", "duration_minutes", "born_in_canada_bin",
+              gender_dummies, undergrad_dummies)
+
+glm_model <- glm(
+  reformulate(glm_cols, response = "stock_mkt_binary"),
+  data   = predictors,
+  family = binomial(link = "logit")
+)
+
+summary(glm_model)
+
+or_full <- data.frame(
+  Odds_Ratio = exp(coef(glm_model)),
+  CI_Lower   = exp(confint(glm_model)[, 1]),
+  CI_Upper   = exp(confint(glm_model)[, 2]),
+  p_value    = coef(summary(glm_model))[, 4]
+)
+
+print(round(or_full, 3))
+```
+
+```{r logistic-assumptions}
+# LOGISTIC REGRESSION: ASSUMPTIONS
+
+# Sample size adequacy
+n_events     <- sum(predictors$stock_mkt_binary)
+n_predictors <- length(glm_cols)
+cat(sprintf("\nSample size adequacy:\n  Events: %d | Predictors: %d | Min required: %d\n  → %s\n",
+            n_events, n_predictors, n_predictors * 10,
+            ifelse(n_events >= n_predictors * 10,
+                   "Threshold met", "Below threshold — flag as limitation")))
+
+# VIF
+cat("\nVariance Inflation Factors (Logistic):\n")
+vif_vals <- vif(glm_model)
+print(round(vif_vals, 2))
+cat(sprintf("  Max VIF: %.2f → %s\n", max(vif_vals),
+            ifelse(max(vif_vals) < 5, "No multicollinearity concern", "Flag in paper")))
+
+# Box-Tidwell test for linearity of log-odds
+cat("\nBox-Tidwell test (linearity of log-odds):\n")
+continuous_vars <- c("overall_index", "age", "duration_minutes")
+bt_data <- predictors %>%
+  select(all_of(c(continuous_vars, "stock_mkt_binary"))) %>%
+  drop_na() %>%
+  mutate(across(all_of(continuous_vars), ~ pmax(., 0.001))) %>%
+  mutate(across(all_of(continuous_vars),
+                list(int = ~ . * log(.)),
+                .names = "{.col}_int"))
+
+bt_formula <- reformulate(
+  c(continuous_vars, paste0(continuous_vars, "_int")),
+  response = "stock_mkt_binary"
+)
+bt_model <- glm(bt_formula, data = bt_data, family = binomial())
+bt_summary <- coef(summary(bt_model))
+bt_results <- bt_summary[grepl("_int", rownames(bt_summary)), , drop = FALSE]
+print(round(bt_results, 4))
+cat("  Non-significant interaction terms suggest linearity assumption holds.\n")
+```
+
+```{r warning=FALSE}
+# LOGISTIC REGRESSION: STOCK MARKET ~ FINANCIAL LITERACY
+glm_model2 <- glm(
+  stock_mkt_binary ~ overall_index,
+  data   = predictors,
+  family = binomial(link = "logit")
+)
+
+summary(glm_model2)
+
+or_lit <- data.frame(
+  Odds_Ratio = exp(coef(glm_model2)),
+  CI_Lower   = exp(confint(glm_model2)[, 1]),
+  CI_Upper   = exp(confint(glm_model2)[, 2]),
+  p_value    = coef(summary(glm_model2))[, 4]
+)
+
+print(round(or_lit, 3))
+```
+
+```{r warning=FALSE}
+stargazer(
+  lm_model, glm_model, glm_model2,
+  type          = "html",
+  out           = "regression_table.html",
+  title         = "Table A1. Regression Results",
+  column.labels = c("Linear Regression (OLS)",
+                    "Logistic Regression (Full)",
+                    "Logistic Regression (Literacy Only)"),
+  model.numbers = FALSE,
+  covariate.labels = c(
+    "Age",
+    "Survey duration (mins)",
+    "Born in Canada",
+    "Gender: Male",
+    "Undergrad: Education & Child Studies",
+    "Undergrad: Humanities & Languages",
+    "Undergrad: Social Sciences",
+    "Undergrad: STEM & Health Sciences",
+    "Overall literacy index"
+  ),
+  add.lines = list(c("Significance levels", "* p<0.1", "** p<0.05", "*** p<0.01")),
+  df = TRUE
+)
+
+save(lm_model, glm_model, glm_model2, 
+     file = "../paper & figures/models.RData")
+```
+
+# Hypothesis test
+```{r}
+# One-sample proportion z-test
+# H0: p = 0.33 (sample rate is equal to Canadian average)
+# H1: p > 0.33 (sample rate is higher than Canadian average)
+
+n <- 145       # sample size
+x <- round(0.42 * n)  # number of investors (42%)
+p_null <- 0.33       # Canadian national average
+
+result <- prop.test(
+  x  = x,
+  n  = n,
+  p  = p_null,
+  alternative = "greater",  # one-tailed: testing if rate is higher
+  correct   = FALSE         # no continuity correction, to match z-test
+)
+
+# Extract and report
+z <- qnorm(result$p.value, lower.tail = FALSE)
+
+cat("One-Sample Proportion Z-Test\n")
+cat("-----------------------------\n")
+cat(sprintf("Sample proportion:   %.2f\n", x/n))
+cat(sprintf("Null proportion:     %.2f\n", p_null))
+cat(sprintf("Z-statistic:         %.2f\n", z))
+cat(sprintf("P-value:             %.3f\n", result$p.value))
+cat(sprintf("\nConclusion: The sample participation rate (%.0f%%) is %s\n",
+    x/n * 100,
+    ifelse(result$p.value < 0.05,
+           "statistically significantly higher than the Canadian average of 33% (p < 0.05).",
+           "not statistically significantly higher than the Canadian average of 33%.")))
 ```
